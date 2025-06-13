@@ -2,8 +2,7 @@ package croco.prjcustomernotification.service.implementation;
 
 import croco.prjcustomernotification.dto.NotificationPreferenceCreationDto;
 import croco.prjcustomernotification.dto.NotificationPreferenceDto;
-import croco.prjcustomernotification.exception.CustomerNotFoundException;
-import croco.prjcustomernotification.exception.NotificationPreferenceNotFoundException;
+import croco.prjcustomernotification.exception.ResourceNotFoundException;
 import croco.prjcustomernotification.model.Customer;
 import croco.prjcustomernotification.model.NotificationPreference;
 import croco.prjcustomernotification.repository.CustomerRepository;
@@ -15,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class NotificationPreferenceServiceImpl implements NotificationPreferenceService {
@@ -31,14 +31,14 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
     @Override
     public NotificationPreferenceDto getPreferenceById(Long id, Long customerId) {
         validateCustomerExists(customerId);
-        NotificationPreference preference = preferenceRepository.findByIdAndCustomerId(id, customerId).orElseThrow(() -> new NotificationPreferenceNotFoundException("Notification preference not found with id: " + id));
+        NotificationPreference preference = preferenceRepository.findByIdAndCustomerId(id, customerId).orElseThrow(() -> new ResourceNotFoundException("Notification preference not found with id: " + id));
         return mapToDto(preference);
     }
 
     @Override
     @Transactional
     public NotificationPreferenceDto createPreference(Long customerId, NotificationPreferenceCreationDto preferenceDto) {
-        Customer customer = customerRepository.findById(customerId).orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
+        Customer customer = customerRepository.findById(customerId).orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + customerId));
 
         NotificationPreference preference = new NotificationPreference();
         preference.setType(preferenceDto.getType());
@@ -54,7 +54,7 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
     @Transactional
     public NotificationPreferenceDto updatePreference(Long id, Long customerId, NotificationPreferenceCreationDto preferenceDto) {
         validateCustomerExists(customerId);
-        NotificationPreference preference = preferenceRepository.findByIdAndCustomerId(id, customerId).orElseThrow(() -> new NotificationPreferenceNotFoundException("Notification preference not found with id: " + id));
+        NotificationPreference preference = preferenceRepository.findByIdAndCustomerId(id, customerId).orElseThrow(() -> new ResourceNotFoundException("Notification preference not found with id: " + id));
 
         preference.setType(preferenceDto.getType());
         preference.setChannelType(preferenceDto.getChannelType());
@@ -69,14 +69,14 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
     public void deletePreference(Long id, Long customerId) {
         validateCustomerExists(customerId);
         if (!preferenceRepository.existsByIdAndCustomerId(id, customerId)) {
-            throw new NotificationPreferenceNotFoundException("Notification preference not found with id: " + id);
+            throw new ResourceNotFoundException("Notification preference not found with id: " + id);
         }
         preferenceRepository.deleteById(id);
     }
 
     private void validateCustomerExists(Long customerId) {
         if (!customerRepository.existsById(customerId)) {
-            throw new CustomerNotFoundException("Customer not found with id: " + customerId);
+            throw new ResourceNotFoundException("Customer not found with id: " + customerId);
         }
     }
 

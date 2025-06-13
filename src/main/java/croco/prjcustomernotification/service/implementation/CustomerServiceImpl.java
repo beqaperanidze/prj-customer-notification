@@ -5,7 +5,7 @@ import croco.prjcustomernotification.dto.CustomerDto;
 import croco.prjcustomernotification.dto.CustomerPageResponseDto;
 import croco.prjcustomernotification.enums.AddressType;
 import croco.prjcustomernotification.enums.NotificationType;
-import croco.prjcustomernotification.exception.CustomerNotFoundException;
+import croco.prjcustomernotification.exception.ResourceNotFoundException;
 import croco.prjcustomernotification.model.Address;
 import croco.prjcustomernotification.model.Customer;
 import croco.prjcustomernotification.model.NotificationPreference;
@@ -36,7 +36,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public CustomerDto getCustomerById(Long id) {
-        var customer = customerRepository.findById(id).orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + id));
+        var customer = customerRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + id));
         return mapToDto(customer);
     }
 
@@ -50,7 +50,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public CustomerDto updateCustomer(Long id, CustomerCreationDto customerDto) {
-        Customer existingCustomer = customerRepository.findById(id).orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + id));
+        Customer existingCustomer = customerRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + id));
 
         existingCustomer.setFirstName(customerDto.getFirstName());
         existingCustomer.setLastName(customerDto.getLastName());
@@ -62,7 +62,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public void deleteCustomer(Long id) {
-        Customer customer = customerRepository.findById(id).orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + id));
+        Customer customer = customerRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + id));
         customerRepository.delete(customer);
     }
 

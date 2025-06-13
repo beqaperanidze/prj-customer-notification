@@ -1,8 +1,0 @@
-package croco.prjcustomernotification.exception;
-
-public class CustomerNotFoundException extends RuntimeException {
-    public CustomerNotFoundException(String message) {
-        super(message);
-    }
-}
-

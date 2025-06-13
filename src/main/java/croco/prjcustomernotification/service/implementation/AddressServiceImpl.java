@@ -3,7 +3,6 @@ package croco.prjcustomernotification.service.implementation;
 import croco.prjcustomernotification.dto.AddressCreationDto;
 import croco.prjcustomernotification.dto.AddressDto;
 import croco.prjcustomernotification.enums.AddressType;
-import croco.prjcustomernotification.exception.CustomerNotFoundException;
 import croco.prjcustomernotification.exception.ResourceNotFoundException;
 import croco.prjcustomernotification.model.Address;
 import croco.prjcustomernotification.model.Customer;
@@ -46,7 +45,7 @@ public class AddressServiceImpl implements AddressService {
     @Override
     @Transactional
     public AddressDto createAddress(Long customerId, AddressCreationDto addressDto) {
-        Customer customer = customerRepository.findById(customerId).orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
+        Customer customer = customerRepository.findById(customerId).orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + customerId));
 
         if (addressDto.isPrimary()) {
             resetPrimaryAddresses(customerId, addressDto.getType());
@@ -122,7 +121,7 @@ public class AddressServiceImpl implements AddressService {
 
     private void validateCustomerExists(Long customerId) {
         if (!customerRepository.existsById(customerId)) {
-            throw new CustomerNotFoundException("Customer not found with id: " + customerId);
+            throw new ResourceNotFoundException("Customer not found with id: " + customerId);
         }
     }
 

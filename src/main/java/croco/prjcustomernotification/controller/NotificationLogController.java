@@ -4,6 +4,12 @@ import croco.prjcustomernotification.dto.NotificationLogDto;
 import croco.prjcustomernotification.enums.NotificationStatus;
 import croco.prjcustomernotification.enums.NotificationType;
 import croco.prjcustomernotification.service.interfaces.NotificationLogService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,50 +22,54 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
+@Tag(name = "Notification Logs", description = "Operations related to notification tracking and statistics")
 public class NotificationLogController {
 
     private final NotificationLogService notificationLogService;
 
-    /**
-     * Gets a notification by id
-     */
     @GetMapping("/{id}")
-    public ResponseEntity<NotificationLogDto> getNotificationById(@PathVariable Long id) {
+    @Operation(summary = "Get notification by ID", description = "Retrieves a specific notification by its unique identifier")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Notification found"),
+            @ApiResponse(responseCode = "404", description = "Notification not found", content = @Content)
+    })
+    public ResponseEntity<NotificationLogDto> getNotificationById(
+            @Parameter(description = "ID of the notification") @PathVariable Long id) {
         return ResponseEntity.ok(notificationLogService.getNotificationById(id));
     }
 
-    /**
-     * Search notifications with filters
-     */
     @GetMapping("/search")
+    @Operation(summary = "Search notifications", description = "Searches notifications with various filters and pagination")
+    @ApiResponse(responseCode = "200", description = "Search results retrieved successfully")
     public ResponseEntity<Page<NotificationLogDto>> searchNotifications(
-            @RequestParam(required = false) Long customerId,
-            @RequestParam(required = false) NotificationType type,
-            @RequestParam(required = false) NotificationStatus status,
-            @RequestParam(required = false) LocalDateTime startDate,
-            @RequestParam(required = false) LocalDateTime endDate,
-            Pageable pageable) {
+            @Parameter(description = "Filter by customer ID") @RequestParam(required = false) Long customerId,
+            @Parameter(description = "Filter by notification type") @RequestParam(required = false) NotificationType type,
+            @Parameter(description = "Filter by notification status") @RequestParam(required = false) NotificationStatus status,
+            @Parameter(description = "Filter by start date") @RequestParam(required = false) LocalDateTime startDate,
+            @Parameter(description = "Filter by end date") @RequestParam(required = false) LocalDateTime endDate,
+            @Parameter(description = "Pagination and sorting parameters") Pageable pageable) {
         return ResponseEntity.ok(notificationLogService.searchNotifications(customerId, type, status, startDate, endDate, pageable));
     }
 
-    /**
-     * Gets notification statistics
-     */
     @GetMapping("/stats")
+    @Operation(summary = "Get notification statistics", description = "Retrieves statistics about notifications within a given date range")
+    @ApiResponse(responseCode = "200", description = "Statistics retrieved successfully")
     public ResponseEntity<Map<String, Object>> getNotificationStatistics(
-            @RequestParam(required = false) LocalDateTime startDate,
-            @RequestParam(required = false) LocalDateTime endDate) {
+            @Parameter(description = "Start date for statistics") @RequestParam(required = false) LocalDateTime startDate,
+            @Parameter(description = "End date for statistics") @RequestParam(required = false) LocalDateTime endDate) {
         return ResponseEntity.ok(notificationLogService.getNotificationStatistics(startDate, endDate));
     }
 
-    /**
-     * Updates notification status (e.g., for webhook callbacks)
-     */
     @PutMapping("/{id}/status")
+    @Operation(summary = "Update notification status", description = "Updates the status of a notification, often used for webhook callbacks")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Status updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Notification not found", content = @Content)
+    })
     public ResponseEntity<NotificationLogDto> updateNotificationStatus(
-            @PathVariable Long id,
-            @RequestParam NotificationStatus status,
-            @RequestParam(required = false) String failureReason) {
+            @Parameter(description = "ID of the notification") @PathVariable Long id,
+            @Parameter(description = "New notification status") @RequestParam NotificationStatus status,
+            @Parameter(description = "Reason for failure (if applicable)") @RequestParam(required = false) String failureReason) {
         return ResponseEntity.ok(notificationLogService.updateNotificationStatus(id, status, failureReason));
     }
 }
