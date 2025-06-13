@@ -2,14 +2,19 @@ package croco.prjcustomernotification.controller;
 
 import croco.prjcustomernotification.dto.CustomerCreationDto;
 import croco.prjcustomernotification.dto.CustomerDto;
+import croco.prjcustomernotification.dto.CustomerPageResponseDto;
+import croco.prjcustomernotification.enums.NotificationType;
 import croco.prjcustomernotification.service.interfaces.CustomerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/customers")
@@ -72,5 +77,24 @@ public class CustomerController {
     public ResponseEntity<Void> deleteCustomer(@PathVariable Long id) {
         customerService.deleteCustomer(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<CustomerPageResponseDto> searchCustomers(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) Set<NotificationType> optedInTypes,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDirection) {
+
+        PageRequest pageRequest = PageRequest.of(
+                page, size,
+                Sort.Direction.fromString(sortDirection), sortBy);
+
+        return ResponseEntity.ok(customerService.searchCustomers(
+                name, email, phone, optedInTypes, pageRequest));
     }
 }

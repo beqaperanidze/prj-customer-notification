@@ -1,12 +1,14 @@
 package croco.prjcustomernotification.model;
 
-import croco.prjcustomernotification.enums.NotificationType;
 import croco.prjcustomernotification.enums.AddressType;
+import croco.prjcustomernotification.enums.NotificationType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -33,17 +35,8 @@ public class NotificationPreference {
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
+    @CreationTimestamp
     private LocalDateTime createdAt;
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
 }
