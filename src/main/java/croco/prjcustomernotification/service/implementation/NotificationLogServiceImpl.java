@@ -4,7 +4,10 @@ import croco.prjcustomernotification.dto.NotificationLogDto;
 import croco.prjcustomernotification.enums.NotificationStatus;
 import croco.prjcustomernotification.enums.NotificationType;
 import croco.prjcustomernotification.exception.ResourceNotFoundException;
+import croco.prjcustomernotification.model.Address;
+import croco.prjcustomernotification.model.Customer;
 import croco.prjcustomernotification.model.NotificationLog;
+import croco.prjcustomernotification.repository.CustomerRepository;
 import croco.prjcustomernotification.repository.NotificationLogRepository;
 import croco.prjcustomernotification.service.interfaces.NotificationLogService;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,11 +28,23 @@ import java.util.Map;
 public class NotificationLogServiceImpl implements NotificationLogService {
 
     private final NotificationLogRepository notificationLogRepository;
+    private final CustomerRepository customerRepository;
 
     @Override
     public NotificationLogDto getNotificationById(Long id) {
         NotificationLog log = notificationLogRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
         return mapToDto(log);
+    }
+
+    @Override
+    public Page<NotificationLogDto> getNotificationsByCustomerId(Long customerId, Pageable pageable) {
+        if (customerId == null) {
+            throw new IllegalArgumentException("Customer ID cannot be null");
+        }
+
+        Page<NotificationLog> notificationsPage = notificationLogRepository.findByCustomerId(customerId, pageable);
+
+        return notificationsPage.map(this::mapToDto);
     }
 
     @Override
@@ -73,6 +89,62 @@ public class NotificationLogServiceImpl implements NotificationLogService {
         stats.put("dailyStatistics", dailyCounts);
 
         return stats;
+    }
+
+    @Override
+    public Map<String, Object> generateCustomerOptInReport(LocalDateTime startDate, LocalDateTime endDate) {
+        Map<String, Object> report = new HashMap<>();
+
+        Map<NotificationType, Long> optInCountsByType = notificationLogRepository.countCustomersByNotificationType(startDate, endDate);
+        report.put("optInCountsByType", optInCountsByType);
+
+        Map<NotificationType, Double> successRateByType = notificationLogRepository.getSuccessRateByType(startDate, endDate);
+        report.put("successRateByType", successRateByType);
+
+        List<Map<String, Object>> failureReasonsList = notificationLogRepository.getTopFailureReasonsByType(startDate, endDate);
+        Map<NotificationType, List<Map<String, Object>>> topFailureReasons = new HashMap<>();
+
+        for (Map<String, Object> item : failureReasonsList) {
+            String typeKey = (String) item.get("type_key");
+            NotificationType notificationType = NotificationType.valueOf(typeKey);
+            @SuppressWarnings("unchecked") List<Map<String, Object>> reasons = (List<Map<String, Object>>) item.get("reasons");
+            topFailureReasons.put(notificationType, reasons);
+        }
+
+        report.put("topFailureReasons", topFailureReasons);
+
+        Map<NotificationType, Double> engagementRateByType = notificationLogRepository.getEngagementRateByType(startDate, endDate);
+        report.put("engagementRateByType", engagementRateByType);
+
+        return report;
+    }
+
+    @Override
+    @Transactional
+    public NotificationLogDto logNotificationSent(Long customerId, NotificationType type, String subject, String content) {
+
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+
+        List<Address> addresses = new ArrayList<>(customer.getAddresses());
+
+        Address address = addresses.stream()
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No suitable address found for this notification type"));
+
+        NotificationLog log = NotificationLog.builder()
+                .customer(customer)
+                .address(address)
+                .type(type)
+                .status(NotificationStatus.PENDING)
+                .subject(subject)
+                .content(content)
+                .sentAt(LocalDateTime.now())
+                .build();
+
+        NotificationLog savedLog = notificationLogRepository.save(log);
+
+        return mapToDto(savedLog);
     }
 
     @Override

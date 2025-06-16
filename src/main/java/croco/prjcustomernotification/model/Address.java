@@ -2,10 +2,7 @@ package croco.prjcustomernotification.model;
 
 import croco.prjcustomernotification.enums.AddressType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -29,6 +26,7 @@ public class Address {
 
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
+    @EqualsAndHashCode.Exclude
     private Customer customer;
 
     private boolean verified;

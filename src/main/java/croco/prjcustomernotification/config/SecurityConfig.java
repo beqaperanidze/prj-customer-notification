@@ -3,6 +3,7 @@ package croco.prjcustomernotification.config;
 import croco.prjcustomernotification.security.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -29,8 +30,23 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .anyRequest().permitAll())
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/api/customers").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/customers/{id}").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/customers").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/customers/{id}").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/customers/{id}").authenticated()
+                        .requestMatchers("/api/customers/search").authenticated()
+
+                        .requestMatchers("/api/customers/{customerId}/addresses/**").authenticated()
+
+                        .requestMatchers("/api/customers/{customerId}/preferences/**").authenticated()
+
+                        .requestMatchers("/api/notifications/**").authenticated()
+
+                        .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
